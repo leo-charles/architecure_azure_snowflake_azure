@@ -1,0 +1,178 @@
+{
+  "exported_at": "2026-06-24T14:22:01.495695Z",
+  "table_name": "silver.trays",
+  "format": "iceberg",
+  "location": "abfss://silver@dlsecatcandlingfrcedev.dfs.core.windows.net/trays_iceberg",
+  "format_version": 2,
+  "partition_columns": [
+    "machine_id",
+    "year",
+    "month",
+    "day"
+  ],
+  "snapshot_id": 5324238894543777468,
+  "fields": [
+    {
+      "field_id": 1,
+      "name": "tray_id",
+      "type": "string",
+      "required": true
+    },
+    {
+      "field_id": 2,
+      "name": "machine_id",
+      "type": "string",
+      "required": true
+    },
+    {
+      "field_id": 3,
+      "name": "candled_at",
+      "type": "timestamptz",
+      "required": true
+    },
+    {
+      "field_id": 4,
+      "name": "candled_date",
+      "type": "date",
+      "required": true
+    },
+    {
+      "field_id": 5,
+      "name": "flock",
+      "type": "int",
+      "required": true
+    },
+    {
+      "field_id": 6,
+      "name": "trolley",
+      "type": "string",
+      "required": true
+    },
+    {
+      "field_id": 7,
+      "name": "tray_seq",
+      "type": "int",
+      "required": true
+    },
+    {
+      "field_id": 8,
+      "name": "flock_name",
+      "type": "string",
+      "required": false
+    },
+    {
+      "field_id": 9,
+      "name": "trolley_name",
+      "type": "string",
+      "required": false
+    },
+    {
+      "field_id": 10,
+      "name": "caliber",
+      "type": "string",
+      "required": false
+    },
+    {
+      "field_id": 11,
+      "name": "setter_tray_number_flock",
+      "type": "int",
+      "required": false
+    },
+    {
+      "field_id": 12,
+      "name": "n_total",
+      "type": "int",
+      "required": true
+    },
+    {
+      "field_id": 13,
+      "name": "n_fertile",
+      "type": "int",
+      "required": true
+    },
+    {
+      "field_id": 14,
+      "name": "n_clear",
+      "type": "int",
+      "required": true
+    },
+    {
+      "field_id": 15,
+      "name": "n_early_dead",
+      "type": "int",
+      "required": true
+    },
+    {
+      "field_id": 16,
+      "name": "n_late_dead",
+      "type": "int",
+      "required": true
+    },
+    {
+      "field_id": 17,
+      "name": "n_missing",
+      "type": "int",
+      "required": true
+    },
+    {
+      "field_id": 18,
+      "name": "is_count_consistent",
+      "type": "boolean",
+      "required": true
+    },
+    {
+      "field_id": 19,
+      "name": "matrix_compact",
+      "type": "string",
+      "required": true
+    },
+    {
+      "field_id": 20,
+      "name": "light_flat",
+      "type": "list<int>",
+      "required": false
+    },
+    {
+      "field_id": 21,
+      "name": "alarm_emergency_stop",
+      "type": "int",
+      "required": false
+    },
+    {
+      "field_id": 22,
+      "name": "alarm_air_pressure_fault",
+      "type": "int",
+      "required": false
+    },
+    {
+      "field_id": 23,
+      "name": "processed_at",
+      "type": "timestamptz",
+      "required": true
+    },
+    {
+      "field_id": 24,
+      "name": "bronze_path",
+      "type": "string",
+      "required": false
+    },
+    {
+      "field_id": 25,
+      "name": "year",
+      "type": "int",
+      "required": true
+    },
+    {
+      "field_id": 26,
+      "name": "month",
+      "type": "int",
+      "required": true
+    },
+    {
+      "field_id": 27,
+      "name": "day",
+      "type": "int",
+      "required": true
+    }
+  ]
+}

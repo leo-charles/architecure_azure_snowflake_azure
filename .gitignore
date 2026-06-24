@@ -1,0 +1,28 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+.env
+
+# IDE / OS
+.vscode/
+*.DS_Store
+
+# Logs & temp
+*.log
+*.tmp
+
+# Databases & cache
+*.db
+*.sqlite
+.cache/
+
+# uv / poetry / pip
+uv.lock
+poetry.lock
