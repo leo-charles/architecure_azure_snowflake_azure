@@ -6,6 +6,8 @@ from pyiceberg.types import (
 from pyiceberg.partitioning import PartitionSpec, PartitionField
 from pyiceberg.transforms import IdentityTransform
 
+from src.config.settings import CATALOG_WAREHOUSE
+
 
 SILVER_TRAYS_SCHEMA = Schema(
     NestedField(1,  "tray_id",                  StringType(),      required=True),
@@ -17,7 +19,7 @@ SILVER_TRAYS_SCHEMA = Schema(
     NestedField(7,  "tray_seq",                 IntegerType(),     required=True),
     NestedField(8,  "flock_name",               StringType(),      required=False),
     NestedField(9,  "trolley_name",             StringType(),      required=False),
-    NestedField(10, "caliber",                  StringType(),      required=False),
+    NestedField(10, "caliber",                  IntegerType(),      required=False),
     NestedField(11, "setter_tray_number_flock", IntegerType(),     required=False),
     NestedField(12, "n_total",                  IntegerType(),     required=True),
     NestedField(13, "n_fertile",                IntegerType(),     required=True),
@@ -45,7 +47,7 @@ SILVER_TRAYS_PARTITION_SPEC = PartitionSpec(
 )
 
 
-def get_or_create_silver_trays(catalog, adls_uri: str):
+def get_or_create_silver_trays(catalog):
     """
     Charge la table silver.trays si elle existe,
     la crée sinon. Retourne la table dans tous les cas.
@@ -65,7 +67,7 @@ def get_or_create_silver_trays(catalog, adls_uri: str):
             identifier="silver.trays",
             schema=SILVER_TRAYS_SCHEMA,
             partition_spec=SILVER_TRAYS_PARTITION_SPEC,
-            location=f"{adls_uri}/trays_iceberg",
+            location=f"{CATALOG_WAREHOUSE}/trays_iceberg",
         )
         print("Table 'silver.trays' créée.")
 
