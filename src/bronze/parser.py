@@ -33,28 +33,79 @@ import hashlib
 import json
 import logging
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Optional
-
-import csv
 
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
-# Constantes métier
+# Encodage des classes d'œufs (commun à tous les types de plateau)
 # ---------------------------------------------------------------------------
- 
-MATRIX_ROWS = 15
-MATRIX_COLS = 10
-TOTAL_EGGS = MATRIX_ROWS * MATRIX_COLS  # 150
- 
-# Encodage des classes d'œufs
+
 CLASS_MISSING = 0
 CLASS_FERTILE = 1
 CLASS_EARLY_DEAD = 2
 CLASS_CLEAR = 3
 CLASS_LATE_DEAD = 4
- 
+
 PMAF_TRIG_TRAY = "Tray"
+
+# ---------------------------------------------------------------------------
+# Chargement des référentiels JSON
+#
+# tray_types.json     : setter_tray_type → {rows, cols, total}
+# machine_registry.json : machine_id     → {couvoir, setter_tray_type, ...}
+#
+# Pour ajouter un nouveau type de plateau : compléter tray_types.json.
+# Pour enregistrer une nouvelle machine : compléter machine_registry.json.
+# ---------------------------------------------------------------------------
+
+_CONFIG_DIR = Path(__file__).parent.parent / "config"
+
+with open(_CONFIG_DIR / "tray_types.json", encoding="utf-8") as _f:
+    _TRAY_TYPES: dict = {k: v for k, v in json.load(_f).items() if not k.startswith("_")}
+
+with open(_CONFIG_DIR / "machine_registry.json", encoding="utf-8") as _f:
+    _MACHINE_REGISTRY: dict = {k: v for k, v in json.load(_f).items() if not k.startswith("_")}
+
+_DEFAULT_ROWS, _DEFAULT_COLS = 15, 10  # fallback Petersime_150
+
+
+def get_tray_config(machine_id: str) -> tuple[int, int]:
+    """
+    Retourne (rows, cols) pour une machine donnée.
+
+    Lookup : machine_id → setter_tray_type → (rows, cols).
+    Logue un avertissement si la machine ou le type de plateau est inconnu
+    ou si les dimensions ne sont pas encore renseignées dans tray_types.json.
+    """
+    machine = _MACHINE_REGISTRY.get(machine_id)
+    if machine is None:
+        logger.warning(
+            "Machine '%s' absente du registre — dimensions par défaut utilisées (%dx%d). "
+            "Ajoutez-la dans src/config/machine_registry.json.",
+            machine_id, _DEFAULT_ROWS, _DEFAULT_COLS,
+        )
+        return _DEFAULT_ROWS, _DEFAULT_COLS
+
+    tray_type = machine["setter_tray_type"]
+    tray_cfg = _TRAY_TYPES.get(tray_type, {})
+    rows, cols = tray_cfg.get("rows"), tray_cfg.get("cols")
+
+    if rows is None or cols is None:
+        logger.warning(
+            "Dimensions du plateau '%s' non renseignées dans tray_types.json "
+            "— dimensions par défaut utilisées (%dx%d). À compléter.",
+            tray_type, _DEFAULT_ROWS, _DEFAULT_COLS,
+        )
+        return _DEFAULT_ROWS, _DEFAULT_COLS
+
+    return rows, cols
+
+
+# Alias rétrocompatibles (utiles dans les tests et notebooks existants)
+MATRIX_ROWS, MATRIX_COLS = _DEFAULT_ROWS, _DEFAULT_COLS
+TOTAL_EGGS = MATRIX_ROWS * MATRIX_COLS
 
 # ---------------------------------------------------------------------------
 # Point d'entrée principal
@@ -79,13 +130,15 @@ def parse_iot_message(raw_message: dict) -> Optional[dict]:
     machine_id = _extract_machine_id(raw_message)
     candled_at_utc = _extract_timestamp(raw_message)
     tags = _decode_body(raw_message)
-    matrix = _build_matrix(tags)
+
+    rows, cols = get_tray_config(machine_id)
+    matrix = _build_matrix(tags, rows, cols)
 
     tray_id = _compute_tray_id(machine_id, candled_at_utc)
 
     counts = _recompute_counts(matrix)
     matrix_compact = _matrix_to_compact(matrix)
-    light_flat = _extract_light_flat(tags)
+    light_flat = _extract_light_flat(tags, rows, cols)
 
     return {
         # Identité
@@ -190,22 +243,22 @@ def _decode_body(msg: dict) -> dict:
         # Le nom du tag est la partie après le dernier "."
         tag_name = tag_id.rsplit(".", 1)[-1] if "." in tag_id else tag_id
         tags[tag_name] = entry.get("value")
- 
+
     return tags
 
 # ---------------------------------------------------------------------------
 # Construction de la matrice 15×10
 # ---------------------------------------------------------------------------
 
-def _build_matrix(tags: dict) -> list[list[int]]:
+def _build_matrix(tags: dict, rows: int = MATRIX_ROWS, cols: int = MATRIX_COLS) -> list[list[int]]:
     """
-    Reconstruit la matrice 15×10 depuis les tags final_candled_eggs[r][c].
+    Reconstruit la matrice rows×cols depuis les tags final_candled_eggs[r][c].
     Indices 1-based dans les tags → 0-based dans la liste Python.
     """
-    matrix = [[CLASS_MISSING] * MATRIX_COLS for _ in range(MATRIX_ROWS)]
- 
-    for r in range(1, MATRIX_ROWS + 1):
-        for c in range(1, MATRIX_COLS + 1):
+    matrix = [[CLASS_MISSING] * cols for _ in range(rows)]
+
+    for r in range(1, rows + 1):
+        for c in range(1, cols + 1):
             key = f"final_candled_eggs[{r}][{c}]"
             raw = tags.get(key)
             if raw is not None:
@@ -213,7 +266,7 @@ def _build_matrix(tags: dict) -> list[list[int]]:
                     matrix[r - 1][c - 1] = int(raw)
                 except (ValueError, TypeError):
                     matrix[r - 1][c - 1] = CLASS_MISSING
- 
+
     return matrix
 
 # ---------------------------------------------------------------------------
@@ -254,15 +307,15 @@ def _matrix_to_compact(matrix: list[list[int]]) -> str:
     return "".join(str(cell) for row in matrix for cell in row)
  
  
-def _extract_light_flat(tags: dict) -> list[int]:
+def _extract_light_flat(tags: dict, rows: int = MATRIX_ROWS, cols: int = MATRIX_COLS) -> list[int]:
     """
-    Extrait les 150 valeurs laser1_light_transmitted_eggs[r][c]
-    dans l'ordre row-major (r=1..15, c=1..10).
+    Extrait les rows×cols valeurs laser1_light_transmitted_eggs[r][c]
+    dans l'ordre row-major.
     Valeur manquante → 0.
     """
     flat = []
-    for r in range(1, MATRIX_ROWS + 1):
-        for c in range(1, MATRIX_COLS + 1):
+    for r in range(1, rows + 1):
+        for c in range(1, cols + 1):
             key = f"laser1_light_transmitted_eggs[{r}][{c}]"
             raw = tags.get(key)
             try:
