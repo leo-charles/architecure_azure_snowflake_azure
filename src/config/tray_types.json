@@ -1,0 +1,19 @@
+{
+  "_comment": "Configuration géométrique de chaque type de plateau setter.",
+  "_comment2": "rows x cols = nombre total de positions. À compléter pour chaque type.",
+
+  "Petersime_150":  { "rows": 15, "cols": 10, "total": 150 },
+
+  "Chickmaster_165": { "rows": null, "cols": null, "total": 165 },
+  "Petersime_84_V":  { "rows": null, "cols": null, "total": 84  },
+  "Jamesway_84":     { "rows": null, "cols": null, "total": 84  },
+  "Jamesway_84_SST": { "rows": null, "cols": null, "total": 84  },
+  "Chickmaster_132": { "rows": null, "cols": null, "total": 132 },
+  "Jamesway_168":    { "rows": null, "cols": null, "total": 168 },
+  "Chickmaster_54":  { "rows": null, "cols": null, "total": 54  },
+  "Jamesway_42":     { "rows": null, "cols": null, "total": 42  },
+  "PasReform_162":   { "rows": null, "cols": null, "total": 162 },
+  "Chickmaster_82":  { "rows": null, "cols": null, "total": 82  },
+  "Hachtech_88_H":   { "rows": null, "cols": null, "total": 88  },
+  "Chickmaster_126": { "rows": null, "cols": null, "total": 126 }
+}
